@@ -10,11 +10,11 @@ workflows:
       - flutter pub get
       - flutter build ios --debug --no-codesign
       - find build/ios -name "*.app"
-      - APP_PATH=$(find build/ios -name "*.app" | head -n 1)
-      - echo "App path: $APP_PATH"
-      - cd $(dirname "$APP_PATH")
+      - "APP_PATH=$(find build/ios -name \"*.app\" | head -n 1)"
+      - "echo App path: $APP_PATH"
+      - "cd $(dirname \"$APP_PATH\")"
       - mkdir -p Payload
-      - cp -r $(basename "$APP_PATH") Payload/
+      - "cp -r $(basename \"$APP_PATH\") Payload/"
       - zip -r App.ipa Payload/
 
     artifacts:
