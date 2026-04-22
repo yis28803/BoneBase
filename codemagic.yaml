@@ -6,43 +6,23 @@ workflows:
     environment:
       flutter: stable
       xcode: latest
-      cocoapods: default
 
     scripts:
       - name: Get Flutter packages
         script: flutter pub get
 
       - name: Build iOS release
-        script: |
-          flutter build ios --release --no-codesign
+        script: flutter build ios --release --no-codesign
 
-      - name: Archive với xcodebuild
+      - name: Package IPA
         script: |
-          xcodebuild \
-            -workspace ios/Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -archivePath $CM_BUILD_DIR/Runner.xcarchive \
-            -destination "generic/platform=iOS" \
-            CODE_SIGNING_ALLOWED=NO \
-            archive
-
-      - name: Export IPA
-        script: |
-          xcodebuild \
-            -exportArchive \
-            -archivePath $CM_BUILD_DIR/Runner.xcarchive \
-            -exportPath $CM_BUILD_DIR/ipa \
-            -exportOptionsPlist ios/ExportOptions.plist \
-            CODE_SIGNING_ALLOWED=NO
+          APP_PATH="build/ios/iphoneos/Runner.app"
+          OUTPUT_DIR="build/ios/ipa"
+          mkdir -p "$OUTPUT_DIR/Payload"
+          cp -r "$APP_PATH" "$OUTPUT_DIR/Payload/Runner.app"
+          cd "$OUTPUT_DIR"
+          zip -r Runner.ipa Payload/
+          echo "✅ IPA created at: $OUTPUT_DIR/Runner.ipa"
 
     artifacts:
-      - $CM_BUILD_DIR/ipa/*.ipa
-
-    publishing:
-      email:
-        recipients:
-          - yis2880@email.com      # 👈 đổi thành email của bạn
-        notify:
-          success: true
-          failure: true
+      - build/ios/ipa/Runner.ipa
