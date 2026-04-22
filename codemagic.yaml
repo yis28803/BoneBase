@@ -42,7 +42,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - your@email.com      # 👈 đổi thành email của bạn
+          - yis2880@email.com      # 👈 đổi thành email của bạn
         notify:
           success: true
           failure: true
