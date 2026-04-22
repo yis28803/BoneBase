@@ -9,20 +9,13 @@ workflows:
     scripts:
       - flutter pub get
       - flutter build ios --debug --no-codesign
-
-      # Debug xem file nằm ở đâu
       - find build/ios -name "*.app"
-
-      # Lấy đúng đường dẫn app
       - APP_PATH=$(find build/ios -name "*.app" | head -n 1)
       - echo "App path: $APP_PATH"
-
       - cd $(dirname "$APP_PATH")
-
       - mkdir -p Payload
       - cp -r $(basename "$APP_PATH") Payload/
-
       - zip -r App.ipa Payload/
 
     artifacts:
-      - build/ios/**/*.ipa
+      - "build/ios/**/*.ipa"
