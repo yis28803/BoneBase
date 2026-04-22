@@ -1,0 +1,18 @@
+workflows:
+  ios-build:
+    name: iOS Build
+    max_build_duration: 60
+
+    environment:
+      flutter: stable
+
+    scripts:
+      - flutter pub get
+      - flutter build ios --debug --no-codesign
+      - cd build/ios/iphoneos
+      - mkdir -p Payload
+      - cp -r Runner.app Payload/
+      - zip -r App.ipa Payload/
+
+    artifacts:
+      - build/ios/iphoneos/App.ipa
