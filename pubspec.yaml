@@ -1,0 +1,67 @@
+name: capmoney_clone
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  
+  # Core functionality (giữ nguyên)
+  sqflite: ^2.3.2
+  path: ^1.9.0
+  image_picker: ^1.1.2
+  fl_chart: ^0.68.0
+  provider: ^6.1.2
+  intl: ^0.20.2
+  uuid: ^4.3.3
+  cupertino_icons: ^1.0.8
+  
+  # Camera & Image (giữ nguyên)
+  camera: ^0.12.0+1
+  gal: ^2.3.0
+  path_provider: ^2.1.3
+  photo_manager: ^3.9.0
+  
+  # Map & Location (giữ nguyên)
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+  geolocator: ^12.0.0
+  geocoding: ^4.0.0
+  flutter_map_marker_cluster: ^1.4.0
+  
+  # Network & Cache (giữ nguyên)
+  dio: ^5.4.0
+  dio_cache_interceptor: ^3.5.0
+  dio_cache_interceptor_file_store: ^1.2.2
+  cached_network_image: ^3.3.0
+  
+  # Animation (giữ lại flutter_animate)
+  flutter_animate: ^4.3.0
+  rive: ^0.11.15
+  
+  # Utility (giữ nguyên)
+  url_launcher: ^6.2.3
+  permission_handler: ^11.0.0
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/bonebase_icon.png"
+  remove_alpha_ios: true
+
+flutter:
+  uses-material-design: true
