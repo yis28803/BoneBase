@@ -5,14 +5,33 @@ import '../../../models/transaction.dart' as model;
 import '../../../providers/transaction_provider.dart';
 import 'header_menu_button.dart';
 
-class HomeHeader extends StatelessWidget {
+class HomeHeader extends StatefulWidget {
   final List<model.Transaction> allTx;
 
   const HomeHeader({super.key, required this.allTx});
 
+  @override
+  State<HomeHeader> createState() => _HomeHeaderState();
+}
+
+class _HomeHeaderState extends State<HomeHeader> {
+  late final TextEditingController _nameController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
   void _editName(BuildContext context) {
     final provider = Provider.of<TransactionProvider>(context, listen: false);
-    final controller = TextEditingController(text: provider.userName);
+    _nameController.text = provider.userName;
 
     showDialog(
       context: context,
@@ -24,7 +43,7 @@ class HomeHeader extends StatelessWidget {
           style: TextStyle(color: Colors.white),
         ),
         content: TextField(
-          controller: controller,
+          controller: _nameController,
           autofocus: true,
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
@@ -45,9 +64,9 @@ class HomeHeader extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
-              final newName = controller.text.trim().isEmpty
+              final newName = _nameController.text.trim().isEmpty
                   ? provider.userName
-                  : controller.text.trim();
+                  : _nameController.text.trim();
               provider.updateUserName(newName);
               Navigator.pop(context);
             },
@@ -66,7 +85,7 @@ class HomeHeader extends StatelessWidget {
     return Consumer<TransactionProvider>(
       builder: (context, provider, _) {
         final now = DateTime.now();
-        final todayTx = allTx
+        final todayTx = widget.allTx
             .where(
               (t) =>
                   t.date.year == now.year &&
@@ -80,7 +99,6 @@ class HomeHeader extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Left: greeting + name + today badge ─────────────────────
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,9 +172,6 @@ class HomeHeader extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // ── Right: menu button ───────────────────────────────────────
-              // Dùng widget tách riêng, tự quản lý trạng thái expand
               const HeaderMenuButton(),
             ],
           ),

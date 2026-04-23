@@ -49,8 +49,19 @@ class HolographicDayCell extends StatelessWidget {
             width: circleSize,
             height: circleSize,
             child: txCount == 0
-                ? _buildEmptyCell(isFuture, isCurrentMonth, isToday, emptyCircleSize)
-                : _buildTransactionStack(transactions, isToday, thumbSize, extraBadgeSize, emojiSize),
+                ? _buildEmptyCell(
+                    isFuture,
+                    isCurrentMonth,
+                    isToday,
+                    emptyCircleSize,
+                  )
+                : _buildTransactionStack(
+                    transactions,
+                    isToday,
+                    thumbSize,
+                    extraBadgeSize,
+                    emojiSize,
+                  ),
           ),
 
           SizedBox(height: baseSize * 0.04), // 2/50 = 0.04
@@ -96,7 +107,12 @@ class HolographicDayCell extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyCell(bool isFuture, bool isCurrentMonth, bool isToday, double circleSize) {
+  Widget _buildEmptyCell(
+    bool isFuture,
+    bool isCurrentMonth,
+    bool isToday,
+    double circleSize,
+  ) {
     return Container(
       width: circleSize,
       height: circleSize,
@@ -291,7 +307,7 @@ class _TxThumb extends StatelessWidget {
         return model.Category.bonus.icon;
       case model.Category.investment:
         return model.Category.investment.icon;
-      default:
+      case model.Category.other:
         return model.Category.other.icon;
     }
   }

@@ -59,7 +59,7 @@ class _HomeFabState extends State<HomeFab> with SingleTickerProviderStateMixin {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xCC0000).withOpacity(_isHovered ? 0.8 : 0.6),
+                  color: const Color(0xFFCC0000).withOpacity(_isHovered ? 0.8 : 0.6),
                   blurRadius: _isHovered ? 25 : 15,
                   spreadRadius: 2,
                 ),

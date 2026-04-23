@@ -2,6 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../models/transaction.dart' as model;
 
+/// Model rõ ràng thay vì dùng tuple ($1, $2, ...)
+class CategoryItem {
+  final model.Category? category;
+  final String icon;
+  final String label;
+  final Color color;
+
+  const CategoryItem({
+    required this.category,
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+}
+
 class CategoryFilterBar extends StatelessWidget {
   final model.Category? selectedCategory;
   final ValueChanged<model.Category?> onCategoryChanged;
@@ -12,82 +27,88 @@ class CategoryFilterBar extends StatelessWidget {
     required this.onCategoryChanged,
   });
 
+  /// ✅ Tạo 1 lần duy nhất (không bị recreate mỗi build)
+  static final List<CategoryItem> _cats = [
+    const CategoryItem(
+      category: null,
+      icon: '📋',
+      label: 'Tất cả',
+      color: Color(0xFF6C63FF),
+    ),
+    CategoryItem(
+      category: model.Category.food,
+      icon: model.Category.food.icon,
+      label: model.Category.food.label,
+      color: model.Category.food.color,
+    ),
+    CategoryItem(
+      category: model.Category.transport,
+      icon: model.Category.transport.icon,
+      label: model.Category.transport.label,
+      color: model.Category.transport.color,
+    ),
+    CategoryItem(
+      category: model.Category.shopping,
+      icon: model.Category.shopping.icon,
+      label: model.Category.shopping.label,
+      color: model.Category.shopping.color,
+    ),
+    CategoryItem(
+      category: model.Category.health,
+      icon: model.Category.health.icon,
+      label: model.Category.health.label,
+      color: model.Category.health.color,
+    ),
+    CategoryItem(
+      category: model.Category.entertainment,
+      icon: model.Category.entertainment.icon,
+      label: model.Category.entertainment.label,
+      color: model.Category.entertainment.color,
+    ),
+    CategoryItem(
+      category: model.Category.salary,
+      icon: model.Category.salary.icon,
+      label: model.Category.salary.label,
+      color: model.Category.salary.color,
+    ),
+    CategoryItem(
+      category: model.Category.bonus,
+      icon: model.Category.bonus.icon,
+      label: model.Category.bonus.label,
+      color: model.Category.bonus.color,
+    ),
+    CategoryItem(
+      category: model.Category.investment,
+      icon: model.Category.investment.icon,
+      label: model.Category.investment.label,
+      color: model.Category.investment.color,
+    ),
+    CategoryItem(
+      category: model.Category.other,
+      icon: model.Category.other.icon,
+      label: model.Category.other.label,
+      color: model.Category.other.color,
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    final cats = [
-      (null, '📋', 'Tất cả', const Color(0xFF6C63FF)),
-      (
-        model.Category.food,
-        model.Category.food.icon,
-        model.Category.food.label,
-        model.Category.food.color,
-      ),
-      (
-        model.Category.transport,
-        model.Category.transport.icon,
-        model.Category.transport.label,
-        model.Category.transport.color,
-      ),
-      (
-        model.Category.shopping,
-        model.Category.shopping.icon,
-        model.Category.shopping.label,
-        model.Category.shopping.color,
-      ),
-      (
-        model.Category.health,
-        model.Category.health.icon,
-        model.Category.health.label,
-        model.Category.health.color,
-      ),
-      (
-        model.Category.entertainment,
-        model.Category.entertainment.icon,
-        model.Category.entertainment.label,
-        model.Category.entertainment.color,
-      ),
-      (
-        model.Category.salary,
-        model.Category.salary.icon,
-        model.Category.salary.label,
-        model.Category.salary.color,
-      ),
-      (
-        model.Category.bonus,
-        model.Category.bonus.icon,
-        model.Category.bonus.label,
-        model.Category.bonus.color,
-      ),
-      (
-        model.Category.investment,
-        model.Category.investment.icon,
-        model.Category.investment.label,
-        model.Category.investment.color,
-      ),
-      (
-        model.Category.other,
-        model.Category.other.icon,
-        model.Category.other.label,
-        model.Category.other.color,
-      ),
-    ];
-
     return SizedBox(
       height: 40,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: cats.length,
+        itemCount: _cats.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
-          final cat = cats[i];
-          final isSelected = selectedCategory == cat.$1;
-          final categoryColor = cat.$4;
+          final cat = _cats[i];
+          final isSelected = selectedCategory == cat.category;
+          final categoryColor = cat.color;
 
           return GestureDetector(
             onTap: () {
               HapticFeedback.selectionClick();
-              onCategoryChanged(cat.$1);
+              onCategoryChanged(cat.category);
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
@@ -118,15 +139,16 @@ class CategoryFilterBar extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(cat.$2, style: const TextStyle(fontSize: 14)),
+                  Text(cat.icon, style: const TextStyle(fontSize: 14)),
                   const SizedBox(width: 6),
                   Text(
-                    cat.$3,
+                    cat.label,
                     style: TextStyle(
                       color: isSelected ? Colors.white : Colors.white60,
                       fontSize: 13,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
                     ),
                   ),
                 ],

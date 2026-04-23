@@ -21,18 +21,20 @@ class SummaryCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final monthTx = allTx.where(
-      (t) =>
-          t.date.year == currentMonth.year &&
-          t.date.month == currentMonth.month,
-    );
+    double totalExpense = 0;
+    double totalIncome = 0;
 
-    final totalExpense = monthTx
-        .where((t) => t.type == model.TransactionType.expense)
-        .fold(0.0, (s, t) => s + t.amount);
-    final totalIncome = monthTx
-        .where((t) => t.type == model.TransactionType.income)
-        .fold(0.0, (s, t) => s + t.amount);
+    for (final t in allTx) {
+      if (t.date.year != currentMonth.year ||
+          t.date.month != currentMonth.month) {
+        continue;
+      }
+      if (t.type == model.TransactionType.expense) {
+        totalExpense += t.amount;
+      } else if (t.type == model.TransactionType.income) {
+        totalIncome += t.amount;
+      }
+    }
 
     final fmt = NumberFormat('#,###', 'vi');
 

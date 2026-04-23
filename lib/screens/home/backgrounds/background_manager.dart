@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'background_config.dart';
 
@@ -12,43 +13,34 @@ class BackgroundManager extends StatefulWidget {
 
 class _BackgroundManagerState extends State<BackgroundManager> {
   late BackgroundConfig _currentBackground;
-  late DateTime _lastCheckTime;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
-
-    // ✅ dùng API mới
     _currentBackground = BackgroundTimeManager.getBackground();
-    _lastCheckTime = DateTime.now();
+
+    // Kiểm tra mỗi 60 giây — không dùng build() để tránh side-effect
+    _timer = Timer.periodic(const Duration(seconds: 60), (_) {
+      if (!mounted) return;
+      final newBackground = BackgroundTimeManager.getBackground();
+      if (newBackground.id != _currentBackground.id) {
+        setState(() => _currentBackground = newBackground);
+      }
+    });
   }
 
-  void _checkAndUpdateBackground() {
-    final now = DateTime.now();
-
-    // kiểm tra mỗi phút
-    if (now.minute != _lastCheckTime.minute) {
-      final newBackground = BackgroundTimeManager.getBackground();
-
-      if (newBackground.id != _currentBackground.id) {
-        setState(() {
-          _currentBackground = newBackground;
-        });
-      }
-
-      _lastCheckTime = now;
-    }
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    _checkAndUpdateBackground();
-
     return Stack(
       children: [
-        Positioned.fill(
-          child: _currentBackground.builder(),
-        ),
+        Positioned.fill(child: _currentBackground.builder()),
         widget.child,
       ],
     );
