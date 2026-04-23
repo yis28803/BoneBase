@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../models/transaction.dart' as model;
 import '../../providers/transaction_provider.dart';
-import '../add_transaction/camera_capture_screen.dart';
+import '../add_transaction/camera/camera_capture_screen.dart';
 import 'day_detail_screen.dart';
 import 'backgrounds/background_manager.dart';
 import 'home_package/home_header.dart';

@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../add_transaction/camera_capture_screen.dart';
+import '../../add_transaction/camera/camera_capture_screen.dart';
 
 
 class HomeFab extends StatefulWidget {
