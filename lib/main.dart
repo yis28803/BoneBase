@@ -8,11 +8,7 @@ import 'screens/home/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // ✅ Chỉ initialize date formatting (NHẸ, không block isolate)
   await initializeDateFormatting('vi_VN', null);
-  
-  // ✅ KHÔNG tạo provider ở đây nữa!
   runApp(const MyApp());
 }
 
@@ -22,7 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => TransactionProvider(), // ✅ Tạo trong widget tree
+      create: (_) => TransactionProvider(),
       child: MaterialApp(
         title: 'CapMoney',
         debugShowCheckedModeBanner: false,
@@ -40,13 +36,12 @@ class MyApp extends StatelessWidget {
             brightness: Brightness.dark,
           ),
         ),
-        home: const AppInitializer(), // ✅ Widget mới để init data
+        home: const AppInitializer(),
       ),
     );
   }
 }
 
-// ✅ Widget mới: Initialize data sau khi app đã ready
 class AppInitializer extends StatefulWidget {
   const AppInitializer({super.key});
 
@@ -58,24 +53,19 @@ class _AppInitializerState extends State<AppInitializer> {
   @override
   void initState() {
     super.initState();
-    // ✅ Load data sau khi widget đã attach vào tree
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeData();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initializeData());
   }
 
   Future<void> _initializeData() async {
     if (!mounted) return;
-    
-    final provider = context.read<TransactionProvider>();
-    await provider.loadAllData();
+    await context.read<TransactionProvider>().loadAllData();
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<TransactionProvider>(
       builder: (context, provider, child) {
-        // ✅ Đang load
+        // Đang load
         if (provider.isLoading) {
           return const Scaffold(
             body: Center(
@@ -91,7 +81,7 @@ class _AppInitializerState extends State<AppInitializer> {
           );
         }
 
-        // ✅ Có lỗi
+        // Có lỗi
         if (provider.loadError != null) {
           return Scaffold(
             body: Center(
@@ -100,9 +90,11 @@ class _AppInitializerState extends State<AppInitializer> {
                 children: [
                   const Icon(Icons.error_outline, size: 64, color: Colors.red),
                   const SizedBox(height: 16),
-                  Text('Lỗi: ${provider.loadError}', 
-                       textAlign: TextAlign.center,
-                       style: const TextStyle(color: Colors.red)),
+                  Text(
+                    'Lỗi: ${provider.loadError}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.red),
+                  ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => provider.retryLoad(),
@@ -114,7 +106,7 @@ class _AppInitializerState extends State<AppInitializer> {
           );
         }
 
-        // ✅ Thành công → Show HomeScreen
+        // Thành công → Show HomeScreen
         return const HomeScreen();
       },
     );

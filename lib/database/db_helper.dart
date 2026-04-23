@@ -3,6 +3,9 @@ import 'package:path/path.dart';
 import '../models/transaction.dart' as model;
 
 class DBHelper {
+  // ✅ Constant tên mặc định — tránh hardcode nhiều chỗ
+  static const String defaultUserName = 'Nghĩa';
+
   // Singleton — chỉ tạo 1 instance duy nhất trong toàn app
   static final DBHelper instance = DBHelper._init();
   static Database? _database;
@@ -42,11 +45,10 @@ class DBHelper {
       )
     ''');
 
-    // Thêm bảng user_settings
     await db.execute('''
       CREATE TABLE user_settings (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_name TEXT DEFAULT 'Nghĩa',
+        user_name TEXT DEFAULT '$defaultUserName',
         greeting TEXT,
         greeting_emoji TEXT,
         greeting_hour INTEGER,
@@ -54,13 +56,12 @@ class DBHelper {
       )
     ''');
 
-    // Insert default user
-    await db.insert('user_settings', {'user_name': 'Nghĩa'});
+    await db.insert('user_settings', {'user_name': defaultUserName});
   }
 
   // Migration theo từng version
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // v1 → v2: thêm cột latitude & longitude vào bảng transactions
+    // v1 → v2: thêm cột latitude & longitude
     if (oldVersion < 2) {
       await db.execute('ALTER TABLE transactions ADD COLUMN latitude REAL');
       await db.execute('ALTER TABLE transactions ADD COLUMN longitude REAL');
@@ -68,40 +69,42 @@ class DBHelper {
 
     // v2 → v3: thêm bảng user_settings
     if (oldVersion < 3) {
-      // Kiểm tra bảng chưa tồn tại trước khi tạo (phòng trường hợp chạy lại)
       await db.execute('''
         CREATE TABLE IF NOT EXISTS user_settings (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_name TEXT DEFAULT 'Nghĩa'
+          user_name TEXT DEFAULT '$defaultUserName'
         )
       ''');
       final existing = await db.query('user_settings', limit: 1);
       if (existing.isEmpty) {
-        await db.insert('user_settings', {'user_name': 'Nghĩa'});
+        await db.insert('user_settings', {'user_name': defaultUserName});
       }
     }
+
+    // v3 → v4: thêm các cột greeting
     if (oldVersion < 4) {
       await db.execute('ALTER TABLE user_settings ADD COLUMN greeting TEXT');
-      await db.execute(
-        'ALTER TABLE user_settings ADD COLUMN greeting_emoji TEXT',
-      );
-      await db.execute(
-        'ALTER TABLE user_settings ADD COLUMN greeting_hour INTEGER',
-      );
-      await db.execute(
-        'ALTER TABLE user_settings ADD COLUMN greeting_date TEXT',
-      );
+      await db.execute('ALTER TABLE user_settings ADD COLUMN greeting_emoji TEXT');
+      await db.execute('ALTER TABLE user_settings ADD COLUMN greeting_hour INTEGER');
+      await db.execute('ALTER TABLE user_settings ADD COLUMN greeting_date TEXT');
+    }
+  }
+
+  // ✅ Dùng trong testing để reset database
+  Future<void> close() async {
+    final db = _database;
+    if (db != null) {
+      await db.close();
+      _database = null;
     }
   }
 
   // Lấy tên người dùng
   Future<String> getUserName() async {
     final db = await database;
-    final maps = await db.query('user_settings', limit: 1);
-    if (maps.isEmpty) {
-      return 'Nghĩa';
-    }
-    return maps[0]['user_name'] as String? ?? 'Nghĩa';
+    final maps = await db.query('user_settings', columns: ['user_name'], limit: 1);
+    if (maps.isEmpty) return defaultUserName;
+    return maps[0]['user_name'] as String? ?? defaultUserName;
   }
 
   // Cập nhật tên người dùng
@@ -125,7 +128,7 @@ class DBHelper {
     );
   }
 
-  // ✏️ Cập nhật giao dịch đã tồn tại (chỉ update đúng record theo id)
+  // ✏️ Cập nhật giao dịch đã tồn tại
   Future<void> updateTransaction(model.Transaction t) async {
     final db = await database;
     await db.update(
@@ -149,14 +152,17 @@ class DBHelper {
     await db.delete('transactions', where: 'id = ?', whereArgs: [id]);
   }
 
-  // 📅 Lấy giao dịch theo tháng (dùng cho thống kê)
+  // 📅 Lấy giao dịch theo tháng
+  // ✅ FIX: xử lý đúng tháng 12 (tránh DateTime(year, 13, 1) crash)
   Future<List<model.Transaction>> getTransactionsByMonth(
     int year,
     int month,
   ) async {
     final db = await database;
     final start = DateTime(year, month, 1).toIso8601String();
-    final end = DateTime(year, month + 1, 1).toIso8601String();
+    final end = month == 12
+        ? DateTime(year + 1, 1, 1).toIso8601String()
+        : DateTime(year, month + 1, 1).toIso8601String();
 
     final maps = await db.query(
       'transactions',
@@ -167,7 +173,7 @@ class DBHelper {
     return maps.map((m) => model.Transaction.fromMap(m)).toList();
   }
 
-  // 📍 Lấy giao dịch có vị trí GPS (dùng cho bản đồ)
+  // 📍 Lấy giao dịch có vị trí GPS
   Future<List<model.Transaction>> getTransactionsWithLocation() async {
     final db = await database;
     final maps = await db.query(
@@ -178,15 +184,20 @@ class DBHelper {
     return maps.map((m) => model.Transaction.fromMap(m)).toList();
   }
 
-  // Lưu greeting đã chọn + thời điểm chọn
+  // ✅ FIX: Dùng update thay vì insert để tránh tạo row mới mỗi lần
   Future<void> saveGreeting(String greeting, String emoji, int hour) async {
     final db = await database;
-    await db.insert('user_settings', {
-      'greeting': greeting,
-      'greeting_emoji': emoji,
-      'greeting_hour': hour,
-      'greeting_date': DateTime.now().toIso8601String(),
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.update(
+      'user_settings',
+      {
+        'greeting': greeting,
+        'greeting_emoji': emoji,
+        'greeting_hour': hour,
+        'greeting_date': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [1],
+    );
   }
 
   // Lấy greeting đã lưu
@@ -195,11 +206,15 @@ class DBHelper {
     final maps = await db.query('user_settings', limit: 1);
     if (maps.isEmpty) return null;
 
+    final row = maps[0];
+    // Trả về null nếu chưa có greeting
+    if (row['greeting'] == null) return null;
+
     return {
-      'greeting': maps[0]['greeting'] as String?,
-      'emoji': maps[0]['greeting_emoji'] as String?,
-      'hour': maps[0]['greeting_hour'] as int?,
-      'date': maps[0]['greeting_date'] as String?,
+      'greeting': row['greeting'] as String?,
+      'emoji': row['greeting_emoji'] as String?,
+      'hour': row['greeting_hour'] as int?,
+      'date': row['greeting_date'] as String?,
     };
   }
 }
