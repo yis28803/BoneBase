@@ -61,7 +61,7 @@ class _KoiFishUltraBackgroundState extends State<KoiFishUltraBackground>
         x: random.nextDouble(),
         y: random.nextDouble(),
         angle: random.nextDouble() * math.pi * 2,
-        speed: random.nextDouble() * 0.006 + 0.004,
+        speed: random.nextDouble() * 0.0015 + 0.0007,
         size: random.nextDouble() * 30 + 50,
         color: premiumColors[random.nextInt(premiumColors.length)],
         tailPhase: random.nextDouble() * math.pi * 2,
@@ -89,7 +89,7 @@ class _KoiFishUltraBackgroundState extends State<KoiFishUltraBackground>
       if (fish.y < -0.3) fish.y = 1.3;
       if (fish.y > 1.3) fish.y = -0.3;
 
-      fish.angle += (math.Random().nextDouble() - 0.5) * 0.03;
+      fish.angle += (math.Random().nextDouble() - 0.5) * 0.008;
     }
 
     for (var p in _particles) {
