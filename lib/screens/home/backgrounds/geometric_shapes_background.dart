@@ -209,9 +209,9 @@ class _Painter extends CustomPainter {
 
       /// 🌟 Glow effect
       final glowPaint = Paint()
-        ..color = s.color.withOpacity(effectiveOpacity * 0.3)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 25 * s.depth)
-        ..blendMode = BlendMode.plus;
+        ..color = s.color.withOpacity(effectiveOpacity * 0.12)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 10 * s.depth)
+        ..blendMode = BlendMode.srcOver;
 
       canvas.drawPath(path, glowPaint);
 
