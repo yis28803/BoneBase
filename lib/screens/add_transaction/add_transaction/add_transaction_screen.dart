@@ -167,12 +167,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
   // ── Save ──────────────────────────────────────────────────────────────────
 
   Future<void> _saveTransaction() async {
-    final rawAmount =
-        _amountController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final rawAmount = _amountController.text.replaceAll(RegExp(r'[^0-9]'), '');
     if (rawAmount.isEmpty || rawAmount == '0') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        _snackBar('⚠️ Vui lòng nhập số tiền', isError: true),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(_snackBar('⚠️ Vui lòng nhập số tiền', isError: true));
       return;
     }
 
@@ -192,25 +191,28 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
     );
 
     try {
-      await Provider.of<TransactionProvider>(context, listen: false)
-          .addTransaction(transaction);
+      await Provider.of<TransactionProvider>(
+        context,
+        listen: false,
+      ).addTransaction(transaction);
       if (!mounted) return;
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        _snackBar('❌ Lỗi khi lưu giao dịch: $e', isError: true),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(_snackBar('❌ Lỗi khi lưu giao dịch: $e', isError: true));
     }
   }
 
   SnackBar _snackBar(String msg, {bool isError = false}) => SnackBar(
-        content: Text(msg),
-        backgroundColor:
-            isError ? const Color(0xFFE53935) : const Color(0xFF2E7D32),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      );
+    content: Text(msg),
+    backgroundColor: isError
+        ? const Color(0xFFE53935)
+        : const Color(0xFF2E7D32),
+    behavior: SnackBarBehavior.floating,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+  );
 
   // ── Numpad ────────────────────────────────────────────────────────────────
 
@@ -272,9 +274,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
-    final diff = DateTime(now.year, now.month, now.day)
-        .difference(DateTime(date.year, date.month, date.day))
-        .inDays;
+    final diff = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).difference(DateTime(date.year, date.month, date.day)).inDays;
     if (diff == 0) return 'Hôm nay';
     if (diff == 1) return 'Hôm qua';
     return DateFormat('dd/MM/yyyy').format(date);
@@ -377,10 +381,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                         const SizedBox(width: 4),
                         const Text(
                           'L.O.V.E',
-                          style: TextStyle(
-                            color: Colors.white38,
-                            fontSize: 12,
-                          ),
+                          style: TextStyle(color: Colors.white38, fontSize: 12),
                         ),
                       ],
                     ),
@@ -397,10 +398,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
           ? const Color(0xFFE57878)
           : const Color.fromARGB(255, 122, 235, 99);
       const end = Color(0xFF3B3232);
-      return List.generate(
-        11,
-        (i) => Color.lerp(start, end, i / 10)!,
-      );
+      return List.generate(11, (i) => Color.lerp(start, end, i / 10)!);
     }
 
     return Padding(
@@ -820,8 +818,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
             ),
           ),
           BottomAction(
-            icon: Icons.ios_share_rounded,
-            label: 'Share',
+            icon: Icons.catching_pokemon_rounded,
+            label: '',
             onTap: () {},
             dimmed: true,
           ),
@@ -896,10 +894,7 @@ class _CategoryPickerSheet extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        category.icon,
-                        style: const TextStyle(fontSize: 16),
-                      ),
+                      Text(category.icon, style: const TextStyle(fontSize: 16)),
                       const SizedBox(width: 6),
                       Text(
                         category.label,
