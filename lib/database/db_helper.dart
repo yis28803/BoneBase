@@ -1,7 +1,8 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/transaction.dart' as model;
-
+import '../models/pokemon_models.dart';
+import '../data/evolution_chains_data.dart';
 class DBHelper {
   // ✅ Constant tên mặc định — tránh hardcode nhiều chỗ
   static const String defaultUserName = 'Nghĩa';
@@ -23,14 +24,15 @@ class DBHelper {
 
     return await openDatabase(
       path,
-      version: 4,
+      version: 5, // ✅ Tăng lên v5 để thêm bảng Pokemon
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
   }
 
-  // Tạo bảng transactions (lần đầu cài app)
+  // Tạo tất cả bảng (lần đầu cài app)
   Future _createDB(Database db, int version) async {
+    // --- Bảng giao dịch tài chính ---
     await db.execute('''
       CREATE TABLE transactions (
         id TEXT PRIMARY KEY,
@@ -57,6 +59,26 @@ class DBHelper {
     ''');
 
     await db.insert('user_settings', {'user_name': defaultUserName});
+
+    // --- Bảng Pokemon ---
+    await db.execute('''
+      CREATE TABLE collected_pokemon (
+        id TEXT PRIMARY KEY,
+        dex_number INTEGER NOT NULL,
+        rarity TEXT NOT NULL,
+        is_revealed INTEGER NOT NULL DEFAULT 0,
+        obtained_at TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE summon_history (
+        id TEXT PRIMARY KEY,
+        pokemon_id TEXT NOT NULL,
+        pulled_at TEXT NOT NULL,
+        FOREIGN KEY (pokemon_id) REFERENCES collected_pokemon(id) ON DELETE CASCADE
+      )
+    ''');
   }
 
   // Migration theo từng version
@@ -88,6 +110,28 @@ class DBHelper {
       await db.execute('ALTER TABLE user_settings ADD COLUMN greeting_hour INTEGER');
       await db.execute('ALTER TABLE user_settings ADD COLUMN greeting_date TEXT');
     }
+
+    // ✅ v4 → v5: thêm bảng Pokemon
+    if (oldVersion < 5) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS collected_pokemon (
+          id TEXT PRIMARY KEY,
+          dex_number INTEGER NOT NULL,
+          rarity TEXT NOT NULL,
+          is_revealed INTEGER NOT NULL DEFAULT 0,
+          obtained_at TEXT NOT NULL
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS summon_history (
+          id TEXT PRIMARY KEY,
+          pokemon_id TEXT NOT NULL,
+          pulled_at TEXT NOT NULL,
+          FOREIGN KEY (pokemon_id) REFERENCES collected_pokemon(id) ON DELETE CASCADE
+        )
+      ''');
+    }
   }
 
   // ✅ Dùng trong testing để reset database
@@ -99,7 +143,10 @@ class DBHelper {
     }
   }
 
-  // Lấy tên người dùng
+  // ═══════════════════════════════════════════════════════════════════════════
+  // USER SETTINGS
+  // ═══════════════════════════════════════════════════════════════════════════
+
   Future<String> getUserName() async {
     final db = await database;
     final maps = await db.query('user_settings', columns: ['user_name'], limit: 1);
@@ -107,7 +154,6 @@ class DBHelper {
     return maps[0]['user_name'] as String? ?? defaultUserName;
   }
 
-  // Cập nhật tên người dùng
   Future<void> updateUserName(String name) async {
     final db = await database;
     await db.update(
@@ -118,7 +164,10 @@ class DBHelper {
     );
   }
 
-  // ➕ Thêm giao dịch mới
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TRANSACTIONS
+  // ═══════════════════════════════════════════════════════════════════════════
+
   Future<void> insertTransaction(model.Transaction t) async {
     final db = await database;
     await db.insert(
@@ -128,7 +177,6 @@ class DBHelper {
     );
   }
 
-  // ✏️ Cập nhật giao dịch đã tồn tại
   Future<void> updateTransaction(model.Transaction t) async {
     final db = await database;
     await db.update(
@@ -139,21 +187,18 @@ class DBHelper {
     );
   }
 
-  // 📋 Lấy tất cả giao dịch, mới nhất lên đầu
   Future<List<model.Transaction>> getAllTransactions() async {
     final db = await database;
     final maps = await db.query('transactions', orderBy: 'date DESC');
     return maps.map((m) => model.Transaction.fromMap(m)).toList();
   }
 
-  // 🗑️ Xoá giao dịch theo ID
   Future<void> deleteTransaction(String id) async {
     final db = await database;
     await db.delete('transactions', where: 'id = ?', whereArgs: [id]);
   }
 
-  // 📅 Lấy giao dịch theo tháng
-  // ✅ FIX: xử lý đúng tháng 12 (tránh DateTime(year, 13, 1) crash)
+  // ✅ FIX: xử lý đúng tháng 12
   Future<List<model.Transaction>> getTransactionsByMonth(
     int year,
     int month,
@@ -173,7 +218,6 @@ class DBHelper {
     return maps.map((m) => model.Transaction.fromMap(m)).toList();
   }
 
-  // 📍 Lấy giao dịch có vị trí GPS
   Future<List<model.Transaction>> getTransactionsWithLocation() async {
     final db = await database;
     final maps = await db.query(
@@ -184,7 +228,10 @@ class DBHelper {
     return maps.map((m) => model.Transaction.fromMap(m)).toList();
   }
 
-  // ✅ FIX: Dùng update thay vì insert để tránh tạo row mới mỗi lần
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GREETING
+  // ═══════════════════════════════════════════════════════════════════════════
+
   Future<void> saveGreeting(String greeting, String emoji, int hour) async {
     final db = await database;
     await db.update(
@@ -200,14 +247,12 @@ class DBHelper {
     );
   }
 
-  // Lấy greeting đã lưu
   Future<Map<String, dynamic>?> getGreeting() async {
     final db = await database;
     final maps = await db.query('user_settings', limit: 1);
     if (maps.isEmpty) return null;
 
     final row = maps[0];
-    // Trả về null nếu chưa có greeting
     if (row['greeting'] == null) return null;
 
     return {
@@ -216,5 +261,104 @@ class DBHelper {
       'hour': row['greeting_hour'] as int?,
       'date': row['greeting_date'] as String?,
     };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // COLLECTED POKEMON
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Future<void> insertCollectedPokemon(CollectedPokemon pokemon) async {
+    final db = await database;
+    await db.insert(
+      'collected_pokemon',
+      pokemon.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> updateCollectedPokemon(CollectedPokemon pokemon) async {
+    final db = await database;
+    await db.update(
+      'collected_pokemon',
+      pokemon.toMap(),
+      where: 'id = ?',
+      whereArgs: [pokemon.id],
+    );
+  }
+
+  Future<void> deleteCollectedPokemon(String id) async {
+    final db = await database;
+    await db.delete('collected_pokemon', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // ✅ Reconstruct EvolutionChain từ kAllEvolutionChains khi load
+  Future<List<CollectedPokemon>> getAllCollectedPokemon() async {
+    final db = await database;
+    final maps = await db.query('collected_pokemon', orderBy: 'obtained_at DESC');
+
+    return maps.map((m) {
+      final dexNumber = m['dex_number'] as int;
+
+      // Lookup chain từ static data
+      final chain = _findChainByDex(dexNumber) ??
+          EvolutionChain(stages: [PokemonStage(name: 'unknown', dexNumber: dexNumber, stage: 1)]);
+
+      final stage = chain.stages.firstWhere(
+        (s) => s.dexNumber == dexNumber,
+        orElse: () => chain.stages.first,
+      );
+
+      return CollectedPokemon.fromMap(m, stage, chain);
+    }).toList();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SUMMON HISTORY
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Future<void> insertSummonRecord(SummonRecord record) async {
+    final db = await database;
+    await db.insert(
+      'summon_history',
+      record.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  // ✅ Join với collected list đã load sẵn — tránh N+1 query
+  Future<List<SummonRecord>> getAllSummonHistory(
+    List<CollectedPokemon> collected,
+  ) async {
+    final db = await database;
+    final maps = await db.query('summon_history', orderBy: 'pulled_at DESC');
+
+    // Build lookup map để join nhanh
+    final collectedMap = {for (final p in collected) p.id: p};
+
+    final result = <SummonRecord>[];
+    for (final m in maps) {
+      final pokemonId = m['pokemon_id'] as String;
+      final pokemon = collectedMap[pokemonId];
+      if (pokemon == null) continue; // orphan record — bỏ qua
+
+      result.add(SummonRecord(
+        id: m['id'] as String,
+        pokemon: pokemon,
+        pulledAt: DateTime.parse(m['pulled_at'] as String),
+      ));
+    }
+    return result;
+  }
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────
+
+  EvolutionChain? _findChainByDex(int dexNumber) {
+    try {
+      return kAllEvolutionChains.firstWhere(
+        (chain) => chain.stages.any((s) => s.dexNumber == dexNumber),
+      );
+    } catch (_) {
+      return null;
+    }
   }
 }

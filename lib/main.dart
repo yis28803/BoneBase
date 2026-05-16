@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'providers/transaction_provider.dart';
+import 'providers/pokemon_provider.dart';
 import 'screens/home/home_screen.dart';
 
 void main() async {
@@ -17,8 +18,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => TransactionProvider(),
+    return MultiProvider( // ✅ Đổi sang MultiProvider
+      providers: [
+        ChangeNotifierProvider(create: (_) => TransactionProvider()),
+        ChangeNotifierProvider(create: (_) => PokemonProvider()), // ✅ Thêm
+      ],
       child: MaterialApp(
         title: 'CapMoney',
         debugShowCheckedModeBanner: false,
@@ -58,15 +62,20 @@ class _AppInitializerState extends State<AppInitializer> {
 
   Future<void> _initializeData() async {
     if (!mounted) return;
-    await context.read<TransactionProvider>().loadAllData();
+    // ✅ Load song song cả hai provider
+    await Future.wait([
+      context.read<TransactionProvider>().loadAllData(),
+      context.read<PokemonProvider>().loadAllData(),
+    ]);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<TransactionProvider>(
-      builder: (context, provider, child) {
-        // Đang load
-        if (provider.isLoading) {
+    // ✅ Lắng nghe cả hai provider — chỉ show HomeScreen khi cả hai đã load xong
+    return Consumer2<TransactionProvider, PokemonProvider>(
+      builder: (context, txProvider, pokemonProvider, child) {
+        // Đang load (một trong hai)
+        if (txProvider.isLoading || pokemonProvider.isLoading) {
           return const Scaffold(
             body: Center(
               child: Column(
@@ -81,8 +90,9 @@ class _AppInitializerState extends State<AppInitializer> {
           );
         }
 
-        // Có lỗi
-        if (provider.loadError != null) {
+        // Có lỗi (ưu tiên hiện lỗi transaction trước, rồi đến pokemon)
+        final error = txProvider.loadError ?? pokemonProvider.loadError;
+        if (error != null) {
           return Scaffold(
             body: Center(
               child: Column(
@@ -91,13 +101,16 @@ class _AppInitializerState extends State<AppInitializer> {
                   const Icon(Icons.error_outline, size: 64, color: Colors.red),
                   const SizedBox(height: 16),
                   Text(
-                    'Lỗi: ${provider.loadError}',
+                    'Lỗi: $error',
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: Colors.red),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () => provider.retryLoad(),
+                    onPressed: () {
+                      txProvider.retryLoad();
+                      pokemonProvider.retryLoad();
+                    },
                     child: const Text('Thử lại'),
                   ),
                 ],

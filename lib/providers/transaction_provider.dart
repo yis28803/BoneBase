@@ -51,6 +51,38 @@ class TransactionProvider with ChangeNotifier {
         .fold(0.0, (sum, t) => sum + t.amount);
   }
 
+  // ─── Valid Transaction Count (chống spam) ────────────────────────────────
+  //
+  // Quy tắc: sort tất cả transaction theo date tăng dần, sau đó đếm
+  // những transaction mà date của nó cách date của transaction hợp lệ
+  // liền trước (gần nhất) ít nhất 30 phút.
+  // Giao dịch đầu tiên luôn được tính hợp lệ.
+  //
+  // Đây là số dùng để so sánh với pullHistory.length trong PokemonProvider
+  // để quyết định nút Pokémon có được bấm hay không.
+
+  int get validTransactionCount {
+    if (_transactions.isEmpty) return 0;
+
+    // Sort theo date tăng dần (cũ → mới)
+    final sorted = [..._transactions]..sort((a, b) => a.date.compareTo(b.date));
+
+    int count = 1; // Giao dịch đầu tiên luôn hợp lệ
+    DateTime lastValidDate = sorted.first.date;
+
+    for (int i = 1; i < sorted.length; i++) {
+      final diff = sorted[i].date.difference(lastValidDate);
+      if (diff.inMinutes >= 30) {
+        count++;
+        lastValidDate = sorted[i].date;
+      }
+    }
+
+    return count;
+  }
+
+  // ─── Load ─────────────────────────────────────────────────────────────────
+
   // ✅ FIX: loadAllData — error handling nhất quán
   // Các hàm con (loadTransactions, loadUserName) không tự catch nữa
   // để lỗi có thể bubble up đúng cách vào _loadError

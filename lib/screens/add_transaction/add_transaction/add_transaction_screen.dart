@@ -9,6 +9,8 @@ import 'package:uuid/uuid.dart';
 
 import '../../../models/transaction.dart' as model;
 import '../../../providers/transaction_provider.dart';
+import '../../../controller/home_controller.dart';
+import '../../../providers/pokemon_provider.dart';
 import '../camera/camera_capture_screen.dart';
 import 'app_colors.dart';
 import 'bottom_action.dart';
@@ -48,6 +50,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
   bool _isSaving = false;
   bool _isFocusChanging = false;
   bool _showCustomNumpad = false;
+
+  // Pokemon
+  final _pokemonController = HomeController();
 
   // GPS
   double? _latitude;
@@ -720,35 +725,55 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          // ─────────────────────────────────────────
+          // RETAKE CAMERA BUTTON
+          // ─────────────────────────────────────────
           BottomAction(
             icon: Icons.flip_camera_ios_rounded,
             label: 'Chụp lại',
-            onTap: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => CameraCaptureScreen(
-                  preselectedDate: widget.preselectedDate,
+
+            onTap: () {
+              HapticFeedback.selectionClick();
+
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => CameraCaptureScreen(
+                    preselectedDate: widget.preselectedDate,
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
-          // Save button
+
+          // ─────────────────────────────────────────
+          // SAVE BUTTON
+          // ─────────────────────────────────────────
           GestureDetector(
             onTap: !_isValid
                 ? null
                 : () async {
                     HapticFeedback.mediumImpact();
+
                     setState(() => _isSaving = true);
+
                     await _saveTransaction();
-                    if (mounted) setState(() => _isSaving = false);
+
+                    if (mounted) {
+                      setState(() => _isSaving = false);
+                    }
                   },
+
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeOut,
+
               width: 68,
               height: 68,
+
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
+
                 gradient: _isValid
                     ? const LinearGradient(
                         begin: Alignment.topLeft,
@@ -765,12 +790,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                         end: Alignment.bottomRight,
                         colors: [Color(0xFF3A3A3A), Color(0xFF1F1F1F)],
                       ),
+
                 border: Border.all(
                   color: _isValid
                       ? Colors.white.withOpacity(0.15)
                       : Colors.white.withOpacity(0.05),
                   width: 1.2,
                 ),
+
                 boxShadow: _isValid
                     ? [
                         BoxShadow(
@@ -792,9 +819,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                         ),
                       ],
               ),
+
               child: Center(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 200),
+
                   child: _isSaving
                       ? const SizedBox(
                           key: ValueKey('loading'),
@@ -817,11 +846,144 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
               ),
             ),
           ),
-          BottomAction(
-            icon: Icons.catching_pokemon_rounded,
-            label: '',
-            onTap: () {},
-            dimmed: true,
+
+          // ─────────────────────────────────────────
+          // POKEMON SUMMON BUTTON
+          // ─────────────────────────────────────────
+          Consumer2<TransactionProvider, PokemonProvider>(
+            builder: (context, txProvider, pokemonProvider, _) {
+              final validCount = txProvider.validTransactionCount;
+
+              final canSummon = pokemonProvider.canSummon(validCount);
+
+              final count = pokemonProvider.collected.length;
+
+              final remaining = pokemonProvider.remainingToNextMilestone(
+                validCount,
+              );
+
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  GestureDetector(
+                    onTap: canSummon
+                        ? () async {
+                            await _pokemonController.onSummon(context);
+                          }
+                        : () {
+                            HapticFeedback.lightImpact();
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              _snackBar(
+                                remaining > 0
+                                    ? '🔒 Còn $remaining giao dịch nữa để triệu hồi!'
+                                    : '🎉 Bạn đã sưu tầm tất cả Pokémon!',
+                                isError: false,
+                              ),
+                            );
+                          },
+
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOut,
+
+                      width: 52,
+                      height: 52,
+
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+
+                        gradient: canSummon
+                            ? const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [Color(0xFFFFD700), Color(0xFFFF8C00)],
+                              )
+                            : const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [Color(0xFF2A2A2A), Color(0xFF1A1A1A)],
+                              ),
+
+                        border: Border.all(
+                          color: canSummon
+                              ? Colors.white.withOpacity(0.25)
+                              : Colors.white.withOpacity(0.05),
+                          width: 1.2,
+                        ),
+
+                        boxShadow: canSummon
+                            ? [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFFFFD700,
+                                  ).withOpacity(0.45),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ]
+                            : [],
+                      ),
+
+                      child: Icon(
+                        Icons.catching_pokemon_rounded,
+                        size: 26,
+                        color: canSummon
+                            ? Colors.white.withOpacity(0.95)
+                            : Colors.white24,
+                      ),
+                    ),
+                  ),
+
+                  if (count > 0)
+                    Positioned(
+                      top: -4,
+                      right: -4,
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFF8C00),
+                          shape: BoxShape.circle,
+                        ),
+
+                        child: Text(
+                          '$count',
+
+                          style: const TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  if (!canSummon)
+                    Positioned(
+                      bottom: -2,
+                      right: -2,
+
+                      child: Container(
+                        width: 16,
+                        height: 16,
+
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF333333),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white12, width: 1),
+                        ),
+
+                        child: const Icon(
+                          Icons.lock,
+                          size: 9,
+                          color: Colors.white38,
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
         ],
       ),
