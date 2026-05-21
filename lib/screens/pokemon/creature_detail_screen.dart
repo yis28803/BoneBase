@@ -243,60 +243,60 @@ class _CreatureDetailScreenState extends State<CreatureDetailScreen>
 }
 
 // ─────────────────────────────────────────────────────────────
-class _InsightCard extends StatelessWidget {
-  final String insight;
-  final Color color;
+// class _InsightCard extends StatelessWidget {
+//   final String insight;
+//   final Color color;
 
-  const _InsightCard({required this.insight, required this.color});
+//   const _InsightCard({required this.insight, required this.color});
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.25)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.insights_rounded, color: color, size: 16),
-              ),
-              const SizedBox(width: 10),
-              const Text(
-                'Financial Insight',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Sau khi add vào dự án sẽ xử lý sau',
-            style: TextStyle(
-              fontSize: 15,
-              color: AppColors.textPrimary,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       padding: const EdgeInsets.all(16),
+//       decoration: BoxDecoration(
+//         color: AppColors.bgCard,
+//         borderRadius: BorderRadius.circular(16),
+//         border: Border.all(color: color.withOpacity(0.25)),
+//       ),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           Row(
+//             children: [
+//               Container(
+//                 width: 28,
+//                 height: 28,
+//                 decoration: BoxDecoration(
+//                   color: color.withOpacity(0.15),
+//                   borderRadius: BorderRadius.circular(8),
+//                 ),
+//                 child: Icon(Icons.insights_rounded, color: color, size: 16),
+//               ),
+//               const SizedBox(width: 10),
+//               const Text(
+//                 'Financial Insight',
+//                 style: TextStyle(
+//                   fontSize: 13,
+//                   fontWeight: FontWeight.w600,
+//                   color: AppColors.textSecondary,
+//                 ),
+//               ),
+//             ],
+//           ),
+//           const SizedBox(height: 12),
+//           const Text(
+//             'Sau khi add vào dự án sẽ xử lý sau',
+//             style: TextStyle(
+//               fontSize: 15,
+//               color: AppColors.textPrimary,
+//               height: 1.5,
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 
 // ─────────────────────────────────────────────────────────────
 class _LoreCard extends StatefulWidget {
