@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
+import '../../../controller/home_controller.dart';
 import 'package:provider/provider.dart';
 import '../../../models/transaction.dart' as model;
 import '../../../providers/transaction_provider.dart';
@@ -24,6 +25,7 @@ class _MapScreenState extends State<MapScreen> {
   int _yearOffset = 0;
   model.Category? _selectedCategory;
   String _selectedMapStyle = 'voyager';
+  late final HomeController controller;
 
   final _formatter = NumberFormat('#,###', 'vi_VN');
 
@@ -35,6 +37,9 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
+
+    controller = HomeController();
+
     _initTileProvider();
   }
 
@@ -241,33 +246,37 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
           // Badge kỳ hiện tại
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: const Color(0xFF8B5CF6).withOpacity(0.15),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: const Color(0xFF8B5CF6).withOpacity(0.4),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.calendar_today_rounded,
-                  size: 12,
-                  color: Color(0xFF9D8EFF),
+          // ── Button COLLECTION ────────────────────────────────────
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              HapticFeedback.mediumImpact();
+
+              controller.openCollection(context);
+            },
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF2C2C2E),
+                border: Border.all(
+                  color: const Color(0xFFFF9D63).withOpacity(0.5),
+                  width: 2,
                 ),
-                const SizedBox(width: 5),
-                Text(
-                  _periodLabel,
-                  style: const TextStyle(
-                    color: Color(0xFF9D8EFF),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFF9D63).withOpacity(0.4),
+                    blurRadius: 10,
+                    spreadRadius: 1,
                   ),
-                ),
-              ],
+                ],
+              ),
+              child: const Icon(
+                Icons.catching_pokemon_rounded,
+                color: Color(0xFFFF9D63),
+                size: 20,
+              ),
             ),
           ),
         ],

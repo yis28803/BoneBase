@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../controller/home_controller.dart';
+// import 'package:provider/provider.dart';
+// import '../../../providers/transaction_provider.dart';
 
 import '../../stats/stats_screen.dart';
 import '../../utils/map_screen.dart';
@@ -13,133 +14,80 @@ class HeaderMenuButton extends StatefulWidget {
   State<HeaderMenuButton> createState() => _HeaderMenuButtonState();
 }
 
-class _HeaderMenuButtonState extends State<HeaderMenuButton> {
-  bool _isExpanded = false;
+class _HeaderMenuButtonState extends State<HeaderMenuButton>
+    with SingleTickerProviderStateMixin {
+  bool _expanded = false;
 
-  late final HomeController controller;
-
-  @override
-  void initState() {
-    super.initState();
-
-    controller = HomeController();
-  }
-
-  void _toggle() {
+  void _toggleMenu() {
     HapticFeedback.selectionClick();
-    setState(() => _isExpanded = !_isExpanded);
+
+    setState(() {
+      _expanded = !_expanded;
+    });
   }
 
-  void _handleOpenCollection() {
-    controller.openCollection(context);
+  void _openStats() {
+    HapticFeedback.mediumImpact();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const StatsScreen(),
+      ),
+    );
+  }
+
+  void _openMap() {
+    HapticFeedback.mediumImpact();
+
+    setState(() {
+      _expanded = false;
+    });
+
+    // final provider = Provider.of<TransactionProvider>(
+    //   context,
+    //   listen: false,
+    // );
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const MapScreen(),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 176,
+      width: 132,
       height: 88,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // ── Button THỐNG KÊ ──────────────────────────────────────
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            left: _isExpanded ? 44 : 132,
+          /// ===== Stats Button =====
+          _buildAnimatedButton(
+            visible: _expanded,
+            left: _expanded ? 44 : 88,
             top: 22,
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 200),
-              opacity: _isExpanded ? 1.0 : 0.0,
-              child: IgnorePointer(
-                ignoring: !_isExpanded,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    HapticFeedback.mediumImpact();
-
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const StatsScreen(),
-                      ),
-                    );
-                  },
-                  child: const _CircleBtn(
-                    color: Color(0xFF9D8EFF),
-                    icon: Icons.bar_chart_rounded,
-                  ),
-                ),
-              ),
-            ),
+            icon: Icons.bar_chart_rounded,
+            color: const Color(0xFF9D8EFF),
+            onTap: _openStats,
           ),
 
-          // ── Button BẢN ĐỒ ────────────────────────────────────────
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            left: _isExpanded ? 0 : 132,
+          /// ===== Map Button =====
+          _buildAnimatedButton(
+            visible: _expanded,
+            left: _expanded ? 0 : 88,
             top: 22,
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 200),
-              opacity: _isExpanded ? 1.0 : 0.0,
-              child: IgnorePointer(
-                ignoring: !_isExpanded,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    HapticFeedback.mediumImpact();
-
-                    setState(() => _isExpanded = false);
-
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const MapScreen(),
-                      ),
-                    );
-                  },
-                  child: const _CircleBtn(
-                    color: Color(0xFF9D8EFF),
-                    icon: Icons.map_rounded,
-                  ),
-                ),
-              ),
-            ),
+            icon: Icons.map_rounded,
+            color: const Color(0xFF9D8EFF),
+            onTap: _openMap,
           ),
 
-          // ── Button COLLECTION ────────────────────────────────────
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            left: _isExpanded ? 88 : 132,
-            top: 22,
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 200),
-              opacity: _isExpanded ? 1.0 : 0.0,
-              child: IgnorePointer(
-                ignoring: !_isExpanded,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    HapticFeedback.mediumImpact();
-
-                    setState(() => _isExpanded = false);
-
-                    _handleOpenCollection();
-                  },
-                  child: const _CircleBtn(
-                    color: Color(0xFFFF9D63),
-                    icon: Icons.catching_pokemon_rounded,
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // ── Button chính (toggle) ────────────────────────────────
+          /// ===== Main Toggle Button =====
           Positioned(
-            left: 132,
+            left: 88,
             top: 22,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
@@ -148,7 +96,7 @@ class _HeaderMenuButtonState extends State<HeaderMenuButton> {
               height: 44,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: _isExpanded
+                gradient: _expanded
                     ? const LinearGradient(
                         colors: [
                           Color(0xFFFF638E),
@@ -156,15 +104,14 @@ class _HeaderMenuButtonState extends State<HeaderMenuButton> {
                         ],
                       )
                     : null,
-                color: _isExpanded
-                    ? null
-                    : const Color(0xFF2C2C2E),
+                color:
+                    _expanded ? null : const Color(0xFF2C2C2E),
                 border: Border.all(
-                  color: _isExpanded
+                  color: _expanded
                       ? Colors.transparent
                       : Colors.white12,
                 ),
-                boxShadow: _isExpanded
+                boxShadow: _expanded
                     ? [
                         BoxShadow(
                           color: Colors.purple.withOpacity(0.4),
@@ -175,20 +122,22 @@ class _HeaderMenuButtonState extends State<HeaderMenuButton> {
                     : null,
               ),
               child: InkWell(
-                onTap: _toggle,
                 borderRadius: BorderRadius.circular(22),
-                child: AnimatedRotation(
-                  turns: _isExpanded ? 0.25 : 0,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  child: Icon(
-                    _isExpanded
-                        ? Icons.close_rounded
-                        : Icons.pets_rounded,
-                    color: _isExpanded
-                        ? Colors.white
-                        : Colors.white54,
-                    size: 22,
+                onTap: _toggleMenu,
+                child: Center(
+                  child: AnimatedRotation(
+                    turns: _expanded ? 0.25 : 0,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    child: Icon(
+                      _expanded
+                          ? Icons.close_rounded
+                          : Icons.pets_rounded,
+                      color: _expanded
+                          ? Colors.white
+                          : Colors.white54,
+                      size: 22,
+                    ),
                   ),
                 ),
               ),
@@ -198,10 +147,41 @@ class _HeaderMenuButtonState extends State<HeaderMenuButton> {
       ),
     );
   }
+
+  Widget _buildAnimatedButton({
+    required bool visible,
+    required double left,
+    required double top,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      left: left,
+      top: top,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 200),
+        opacity: visible ? 1 : 0,
+        child: IgnorePointer(
+          ignoring: !visible,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onTap,
+            child: _CircleButton(
+              color: color,
+              icon: icon,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-class _CircleBtn extends StatelessWidget {
-  const _CircleBtn({
+class _CircleButton extends StatelessWidget {
+  const _CircleButton({
     required this.color,
     required this.icon,
   });

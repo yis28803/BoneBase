@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import '../models/transaction.dart' as model;
 import '../models/pokemon_models.dart';
 import '../data/evolution_chains_data.dart';
+
 class DBHelper {
   // ✅ Constant tên mặc định — tránh hardcode nhiều chỗ
   static const String defaultUserName = 'Nghĩa';
@@ -106,9 +107,15 @@ class DBHelper {
     // v3 → v4: thêm các cột greeting
     if (oldVersion < 4) {
       await db.execute('ALTER TABLE user_settings ADD COLUMN greeting TEXT');
-      await db.execute('ALTER TABLE user_settings ADD COLUMN greeting_emoji TEXT');
-      await db.execute('ALTER TABLE user_settings ADD COLUMN greeting_hour INTEGER');
-      await db.execute('ALTER TABLE user_settings ADD COLUMN greeting_date TEXT');
+      await db.execute(
+        'ALTER TABLE user_settings ADD COLUMN greeting_emoji TEXT',
+      );
+      await db.execute(
+        'ALTER TABLE user_settings ADD COLUMN greeting_hour INTEGER',
+      );
+      await db.execute(
+        'ALTER TABLE user_settings ADD COLUMN greeting_date TEXT',
+      );
     }
 
     // ✅ v4 → v5: thêm bảng Pokemon
@@ -132,6 +139,11 @@ class DBHelper {
         )
       ''');
     }
+
+    // v5 → v6 trong _onUpgrade
+    if (oldVersion < 6) {
+      await db.execute('ALTER TABLE collected_pokemon ADD COLUMN insight TEXT');
+    }
   }
 
   // ✅ Dùng trong testing để reset database
@@ -149,7 +161,11 @@ class DBHelper {
 
   Future<String> getUserName() async {
     final db = await database;
-    final maps = await db.query('user_settings', columns: ['user_name'], limit: 1);
+    final maps = await db.query(
+      'user_settings',
+      columns: ['user_name'],
+      limit: 1,
+    );
     if (maps.isEmpty) return defaultUserName;
     return maps[0]['user_name'] as String? ?? defaultUserName;
   }
@@ -294,14 +310,22 @@ class DBHelper {
   // ✅ Reconstruct EvolutionChain từ kAllEvolutionChains khi load
   Future<List<CollectedPokemon>> getAllCollectedPokemon() async {
     final db = await database;
-    final maps = await db.query('collected_pokemon', orderBy: 'obtained_at DESC');
+    final maps = await db.query(
+      'collected_pokemon',
+      orderBy: 'obtained_at DESC',
+    );
 
     return maps.map((m) {
       final dexNumber = m['dex_number'] as int;
 
       // Lookup chain từ static data
-      final chain = _findChainByDex(dexNumber) ??
-          EvolutionChain(stages: [PokemonStage(name: 'unknown', dexNumber: dexNumber, stage: 1)]);
+      final chain =
+          _findChainByDex(dexNumber) ??
+          EvolutionChain(
+            stages: [
+              PokemonStage(name: 'unknown', dexNumber: dexNumber, stage: 1),
+            ],
+          );
 
       final stage = chain.stages.firstWhere(
         (s) => s.dexNumber == dexNumber,
@@ -341,11 +365,13 @@ class DBHelper {
       final pokemon = collectedMap[pokemonId];
       if (pokemon == null) continue; // orphan record — bỏ qua
 
-      result.add(SummonRecord(
-        id: m['id'] as String,
-        pokemon: pokemon,
-        pulledAt: DateTime.parse(m['pulled_at'] as String),
-      ));
+      result.add(
+        SummonRecord(
+          id: m['id'] as String,
+          pokemon: pokemon,
+          pulledAt: DateTime.parse(m['pulled_at'] as String),
+        ),
+      );
     }
     return result;
   }

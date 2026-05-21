@@ -165,9 +165,9 @@ class _CreatureDetailScreenState extends State<CreatureDetailScreen>
                     const SizedBox(height: 24),
 
                     // ── Financial Insight ────────────────────────
-                    _InsightCard(insight: p.financialInsight, color: rarityColor),
+                    // _InsightCard(insight: p.financialInsight, color: rarityColor),
 
-                    const SizedBox(height: 16),
+                    // const SizedBox(height: 16),
 
                     // ── Pokémon Lore ─────────────────────────────
                     if (p.stage.lore.isNotEmpty)
@@ -222,7 +222,7 @@ class _CreatureDetailScreenState extends State<CreatureDetailScreen>
                     const SizedBox(height: 16),
 
                     // ── Pull History ─────────────────────────────
-                    
+
                   ]),
                 ),
               ),
@@ -292,14 +292,6 @@ class _InsightCard extends StatelessWidget {
               height: 1.5,
             ),
           ),
-          // Text(
-          //   insight,
-          //   style: const TextStyle(
-          //     fontSize: 15,
-          //     color: AppColors.textPrimary,
-          //     height: 1.5,
-          //   ),
-          // ),
         ],
       ),
     );

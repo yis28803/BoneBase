@@ -23,43 +23,41 @@ class _SunriseBackgroundState extends State<SunriseBackground>
 
     _mainController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 22), // Tăng thời gian lên 22s
+      duration: const Duration(seconds: 24),
     )..repeat(reverse: true);
 
-    _cloudController =
-        AnimationController(vsync: this, duration: const Duration(seconds: 30))
-          ..addListener(() {
-            _updateClouds();
-          })
-          ..repeat();
+    _cloudController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 40),
+    )
+      ..addListener(_updateClouds)
+      ..repeat();
 
-    _particleController =
-        AnimationController(vsync: this, duration: const Duration(seconds: 10))
-          ..addListener(() {
-            _updateParticles();
-          })
-          ..repeat();
+    _particleController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 12),
+    )
+      ..addListener(_updateParticles)
+      ..repeat();
 
     final random = math.Random();
 
-    _clouds = List.generate(12, (_) {
-      // Tăng số mây lên 12
+    _clouds = List.generate(10, (_) {
       return _Cloud(
         x: random.nextDouble(),
-        y: random.nextDouble() * 0.5 + 0.2, // Mây cao hơn
-        size: random.nextDouble() * 70 + 40, // Mây to hơn
-        speed: random.nextDouble() * 0.00018 + 0.00006,
-        opacity: random.nextDouble() * 0.3 + 0.15, // Mây rõ hơn
+        y: random.nextDouble() * 0.45 + 0.18,
+        size: random.nextDouble() * 60 + 45,
+        speed: random.nextDouble() * 0.00012 + 0.00004,
+        opacity: random.nextDouble() * 0.18 + 0.08,
       );
     });
 
-    _particles = List.generate(50, (_) {
-      // Tăng số hạt lên 50
+    _particles = List.generate(18, (_) {
       return _Particle(
         x: random.nextDouble(),
         y: random.nextDouble(),
-        radius: random.nextDouble() * 2.5 + 1.2, // Hạt to hơn
-        speed: random.nextDouble() * 0.0004 + 0.00015, // Di chuyển nhanh hơn
+        radius: random.nextDouble() * 2 + 0.8,
+        speed: random.nextDouble() * 0.00025 + 0.00008,
       );
     });
   }
@@ -75,105 +73,164 @@ class _SunriseBackgroundState extends State<SunriseBackground>
   void _updateClouds() {
     for (var c in _clouds) {
       c.x += c.speed;
-      if (c.x > 1.3) c.x = -0.3; // Điều chỉnh wrap-around
+
+      if (c.x > 1.25) {
+        c.x = -0.25;
+      }
     }
   }
 
   void _updateParticles() {
     for (var p in _particles) {
       p.y -= p.speed;
-      if (p.y < -0.15) p.y = 1.15; // Điều chỉnh wrap-around
+
+      if (p.y < -0.1) {
+        p.y = 1.1;
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        AnimatedBuilder(
-          animation: _mainController,
-          builder: (_, __) {
-            final progress = _mainController.value;
-            return Container(
+    return RepaintBoundary(
+      child: Stack(
+        children: [
+          // SKY
+          AnimatedBuilder(
+            animation: _mainController,
+            builder: (_, __) {
+              final progress = _mainController.value;
+
+              return Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color.lerp(
+                        const Color(0xFF04050B),
+                        const Color(0xFF0A1630),
+                        progress,
+                      )!,
+                      Color.lerp(
+                        const Color(0xFF0B1220),
+                        const Color(0xFF4A2D1D),
+                        progress * 0.7,
+                      )!,
+                      Color.lerp(
+                        const Color(0xFF141B2B),
+                        const Color(0xFF6A4A28),
+                        progress * 0.75,
+                      )!,
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+
+          // SUN
+          AnimatedBuilder(
+            animation: _mainController,
+            builder: (_, __) {
+              final progress = _mainController.value;
+
+              final y = 0.88 - progress * 0.22;
+              final sunSize = 180.0 + progress * 15.0;
+
+              return Positioned(
+                top: MediaQuery.of(context).size.height * y,
+                left: 0,
+                right: 0,
+                child: IgnorePointer(
+                  child: CustomPaint(
+                    painter: _SunGlowPainter(progress, sunSize),
+                    size: Size(sunSize, sunSize),
+                  ),
+                ),
+              );
+            },
+          ),
+
+          // ATMOSPHERIC FOG
+          IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(0, 0.2),
+                  radius: 1.1,
+                  colors: [
+                    Colors.orange.withOpacity(0.012),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // CLOUDS
+          AnimatedBuilder(
+            animation: _cloudController,
+            builder: (_, __) {
+              return IgnorePointer(
+                child: CustomPaint(
+                  painter: _CloudPainter(_clouds),
+                  size: Size.infinite,
+                ),
+              );
+            },
+          ),
+
+          // PARTICLES
+          AnimatedBuilder(
+            animation: _particleController,
+            builder: (_, __) {
+              return IgnorePointer(
+                child: CustomPaint(
+                  painter: _ParticlePainter(_particles),
+                  size: Size.infinite,
+                ),
+              );
+            },
+          ),
+
+          // DARK OVERLAY
+          IgnorePointer(
+            child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    // Bầu trời trên cùng - thay đổi nhiều hơn
-                    Color.lerp(
-                      const Color(0xFF0A0F2C),
-                      const Color(0xFF1E3A8A),
-                      progress,
-                    )!,
-                    // Bầu trời giữa - hiệu ứng mặt trời mọc mạnh hơn
-                    Color.lerp(
-                      const Color(0xFF1B2A49),
-                      const Color(0xFFFF7B25), // Cam đậm hơn
-                      progress * 1.2, // Tăng hệ số để màu cam xuất hiện sớm hơn
-                    )!,
-                    // Chân trời - vàng rực hơn
-                    Color.lerp(
-                      const Color(0xFF3A4A7A),
-                      const Color(0xFFFFD166), // Vàng sáng hơn
-                      progress * 1.4, // Tăng hệ số để màu vàng rõ hơn
-                    )!,
+                    Colors.black.withOpacity(0.28),
+                    Colors.black.withOpacity(0.42),
+                    Colors.black.withOpacity(0.62),
                   ],
                 ),
               ),
-            );
-          },
-        ),
+            ),
+          ),
 
-        AnimatedBuilder(
-          animation: _mainController,
-          builder: (_, __) {
-            final progress = _mainController.value;
-            // Mặt trời lên cao hơn: từ 0.75 xuống 0.25 (cao hơn 50%)
-            final y = 0.75 - progress * 0.5;
-            final sunSize =
-                280.0 + progress * 40.0; // Mặt trời to dần khi lên cao
-
-            return Positioned(
-              top: MediaQuery.of(context).size.height * y,
-              left: 0,
-              right: 0,
-              child: CustomPaint(
-                painter: _SunGlowPainter(progress, sunSize),
-                size: Size(sunSize, sunSize),
-              ),
-            );
-          },
-        ),
-
-        AnimatedBuilder(
-          animation: _cloudController,
-          builder: (_, __) {
-            return CustomPaint(
-              painter: _CloudPainter(_clouds),
+          // MOUNTAINS
+          IgnorePointer(
+            child: CustomPaint(
+              painter: _MountainPainter(),
               size: Size.infinite,
-            );
-          },
-        ),
-
-        AnimatedBuilder(
-          animation: _particleController,
-          builder: (_, __) {
-            return CustomPaint(
-              painter: _ParticlePainter(_particles),
-              size: Size.infinite,
-            );
-          },
-        ),
-
-        CustomPaint(painter: _MountainPainter(), size: Size.infinite),
-      ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _Cloud {
-  double x, y, size, speed, opacity;
+  double x;
+  double y;
+  double size;
+  double speed;
+  double opacity;
+
   _Cloud({
     required this.x,
     required this.y,
@@ -184,7 +241,11 @@ class _Cloud {
 }
 
 class _Particle {
-  double x, y, radius, speed;
+  double x;
+  double y;
+  double radius;
+  double speed;
+
   _Particle({
     required this.x,
     required this.y,
@@ -204,54 +265,74 @@ class _SunGlowPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
 
-    // Hiệu ứng glow mạnh hơn khi mặt trời lên cao
-    final glowIntensity = 0.7 + value * 0.3;
+    final glowIntensity = 0.16 + value * 0.08;
 
-    // Lớp glow ngoài cùng - lớn hơn và sáng hơn
+    // OUTER GLOW
     final outerGlow = Paint()
       ..shader = RadialGradient(
         colors: [
-          const Color(0xFFFFE082).withOpacity(0.8 * glowIntensity),
-          const Color(0xFFFFB74D).withOpacity(0.5 * glowIntensity),
-          const Color(0xFFFF9800).withOpacity(0.2 * glowIntensity),
+          const Color(0xFFFFB74D).withOpacity(
+            0.05 * glowIntensity,
+          ),
           Colors.transparent,
         ],
-        stops: [0.0, 0.3, 0.6, 1.0],
-      ).createShader(Rect.fromCircle(center: center, radius: radius * 2.2));
+        stops: const [0.0, 1.0],
+      ).createShader(
+        Rect.fromCircle(
+          center: center,
+          radius: radius * 1.2,
+        ),
+      );
 
-    canvas.drawCircle(center, radius * 2.2, outerGlow);
+    canvas.drawCircle(center, radius * 1.2, outerGlow);
 
-    // Lớp glow trung gian
+    // MIDDLE GLOW
     final middleGlow = Paint()
       ..shader = RadialGradient(
         colors: [
-          const Color(0xFFFFF176).withOpacity(0.9 * glowIntensity),
-          const Color(0xFFFFD54F).withOpacity(0.6 * glowIntensity),
+          const Color(0xFFFFCC80).withOpacity(
+            0.04 * glowIntensity,
+          ),
           Colors.transparent,
         ],
-        stops: [0.0, 0.5, 1.0],
-      ).createShader(Rect.fromCircle(center: center, radius: radius * 1.5));
+      ).createShader(
+        Rect.fromCircle(
+          center: center,
+          radius: radius * 0.8,
+        ),
+      );
 
-    canvas.drawCircle(center, radius * 1.5, middleGlow);
+    canvas.drawCircle(center, radius * 0.8, middleGlow);
 
-    // Lõi mặt trời - sáng hơn
+    // SUN CORE
     final core = Paint()
       ..shader = RadialGradient(
         colors: [
-          Colors.white.withOpacity(0.95),
-          const Color(0xFFFFF59D).withOpacity(0.8),
+          const Color(0xFFFFE0A3).withOpacity(0.16),
+          const Color(0xFFFFC46B).withOpacity(0.10),
         ],
-      ).createShader(Rect.fromCircle(center: center, radius: radius * 0.7))
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 35);
+      ).createShader(
+        Rect.fromCircle(
+          center: center,
+          radius: radius * 0.65,
+        ),
+      )
+      ..maskFilter = const MaskFilter.blur(
+        BlurStyle.normal,
+        4,
+      );
 
-    canvas.drawCircle(center, radius * 0.7, core);
+    canvas.drawCircle(center, radius * 0.62, core);
 
-    // Điểm sáng trung tâm
+    // HIGHLIGHT
     final highlight = Paint()
-      ..color = Colors.white.withOpacity(0.9)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
+      ..color = Colors.white.withOpacity(0.04)
+      ..maskFilter = const MaskFilter.blur(
+        BlurStyle.normal,
+        3,
+      );
 
-    canvas.drawCircle(center, radius * 0.4, highlight);
+    canvas.drawCircle(center, radius * 0.18, highlight);
   }
 
   @override
@@ -260,27 +341,53 @@ class _SunGlowPainter extends CustomPainter {
 
 class _CloudPainter extends CustomPainter {
   final List<_Cloud> clouds;
+
   _CloudPainter(this.clouds);
 
   @override
   void paint(Canvas canvas, Size size) {
     for (var c in clouds) {
       final paint = Paint()
-        ..color = Colors.white.withOpacity(c.opacity)
+        ..color = const Color(0xFFE8EDF7).withOpacity(
+          c.opacity * 0.35,
+        )
         ..maskFilter = const MaskFilter.blur(
           BlurStyle.normal,
-          25,
-        ); // Blur mạnh hơn
+          14,
+        );
 
       final dx = c.x * size.width;
       final dy = c.y * size.height;
 
-      // Vẽ đám mây với nhiều vòng tròn hơn để trông thực tế hơn
-      canvas.drawCircle(Offset(dx, dy), c.size, paint);
-      canvas.drawCircle(Offset(dx - c.size * 0.7, dy + 8), c.size * 0.8, paint);
-      canvas.drawCircle(Offset(dx + c.size * 0.7, dy + 8), c.size * 0.8, paint);
-      canvas.drawCircle(Offset(dx - c.size * 0.4, dy - 5), c.size * 0.6, paint);
-      canvas.drawCircle(Offset(dx + c.size * 0.4, dy - 5), c.size * 0.6, paint);
+      canvas.drawCircle(
+        Offset(dx, dy),
+        c.size,
+        paint,
+      );
+
+      canvas.drawCircle(
+        Offset(dx - c.size * 0.7, dy + 8),
+        c.size * 0.82,
+        paint,
+      );
+
+      canvas.drawCircle(
+        Offset(dx + c.size * 0.7, dy + 8),
+        c.size * 0.82,
+        paint,
+      );
+
+      canvas.drawCircle(
+        Offset(dx - c.size * 0.35, dy - 8),
+        c.size * 0.58,
+        paint,
+      );
+
+      canvas.drawCircle(
+        Offset(dx + c.size * 0.35, dy - 8),
+        c.size * 0.58,
+        paint,
+      );
     }
   }
 
@@ -290,34 +397,27 @@ class _CloudPainter extends CustomPainter {
 
 class _ParticlePainter extends CustomPainter {
   final List<_Particle> particles;
+
   _ParticlePainter(this.particles);
 
   @override
   void paint(Canvas canvas, Size size) {
     for (var p in particles) {
-      // Hạt sáng hơn và có opacity thay đổi theo vị trí
-      final opacity = 0.7 - (p.y * 0.3); // Hạt trên cao sáng hơn
+      final opacity = (0.18 - (p.y * 0.08)).clamp(0.03, 0.12);
+
       final paint = Paint()
-        ..color = Colors.white.withOpacity(opacity.clamp(0.3, 0.8));
+        ..color = Colors.white.withOpacity(opacity);
+
+      final offset = Offset(
+        p.x * size.width,
+        p.y * size.height,
+      );
 
       canvas.drawCircle(
-        Offset(p.x * size.width, p.y * size.height),
+        offset,
         p.radius,
         paint,
       );
-
-      // Thêm hiệu ứng glow nhẹ cho hạt
-      if (p.radius > 2.0) {
-        final glowPaint = Paint()
-          ..color = Colors.white.withOpacity(opacity * 0.3)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
-
-        canvas.drawCircle(
-          Offset(p.x * size.width, p.y * size.height),
-          p.radius * 1.5,
-          glowPaint,
-        );
-      }
     }
   }
 
@@ -330,54 +430,68 @@ class _MountainPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..shader = LinearGradient(
-        colors: [
-          const Color(0xFF0D1B2A).withOpacity(0.9),
-          const Color(0xFF1B263B).withOpacity(0.8),
-          const Color(0xFF2C3E50).withOpacity(0.7),
-        ],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+        colors: [
+          const Color(0xFF05070D).withOpacity(0.98),
+          const Color(0xFF0A101A).withOpacity(0.95),
+          const Color(0xFF121C29).withOpacity(0.92),
+        ],
+      ).createShader(
+        Rect.fromLTWH(
+          0,
+          0,
+          size.width,
+          size.height,
+        ),
+      );
 
     final path = Path();
+
     path.moveTo(0, size.height);
 
-    // Đường núi phức tạp hơn
-    path.lineTo(0, size.height * 0.6);
+    path.lineTo(0, size.height * 0.72);
+
     path.quadraticBezierTo(
-      size.width * 0.1,
-      size.height * 0.5,
-      size.width * 0.2,
-      size.height * 0.55,
+      size.width * 0.10,
+      size.height * 0.58,
+      size.width * 0.22,
+      size.height * 0.68,
     );
+
     path.quadraticBezierTo(
-      size.width * 0.35,
-      size.height * 0.4,
-      size.width * 0.5,
-      size.height * 0.65,
+      size.width * 0.38,
+      size.height * 0.44,
+      size.width * 0.52,
+      size.height * 0.76,
     );
+
     path.quadraticBezierTo(
-      size.width * 0.65,
-      size.height * 0.35,
-      size.width * 0.8,
-      size.height * 0.5,
+      size.width * 0.70,
+      size.height * 0.38,
+      size.width * 0.84,
+      size.height * 0.62,
     );
+
     path.quadraticBezierTo(
-      size.width * 0.9,
-      size.height * 0.45,
+      size.width * 0.92,
+      size.height * 0.54,
       size.width,
-      size.height * 0.55,
+      size.height * 0.68,
     );
 
     path.lineTo(size.width, size.height);
+
     path.close();
 
     canvas.drawPath(path, paint);
 
-    // Thêm lớp shadow cho chân núi
     final shadowPaint = Paint()
-      ..color = const Color(0xFF050A14).withOpacity(0.4)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
+      ..color = Colors.black.withOpacity(0.32)
+      ..maskFilter = const MaskFilter.blur(
+        BlurStyle.normal,
+        8,
+      );
 
     canvas.drawPath(path, shadowPaint);
   }

@@ -856,132 +856,63 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
 
               final canSummon = pokemonProvider.canSummon(validCount);
 
-              final count = pokemonProvider.collected.length;
+              return GestureDetector(
+                onTap: canSummon
+                    ? () async {
+                        await _pokemonController.onSummon(context);
+                      }
+                    : () {
+                        HapticFeedback.lightImpact();
+                      },
 
-              final remaining = pokemonProvider.remainingToNextMilestone(
-                validCount,
-              );
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
 
-              return Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  GestureDetector(
-                    onTap: canSummon
-                        ? () async {
-                            await _pokemonController.onSummon(context);
-                          }
-                        : () {
-                            HapticFeedback.lightImpact();
+                  width: 52,
+                  height: 52,
 
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              _snackBar(
-                                remaining > 0
-                                    ? '🔒 Còn $remaining giao dịch nữa để triệu hồi!'
-                                    : '🎉 Bạn đã sưu tầm tất cả Pokémon!',
-                                isError: false,
-                              ),
-                            );
-                          },
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
 
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOut,
+                    gradient: canSummon
+                        ? const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xFFFFD700), Color(0xFFFF8C00)],
+                          )
+                        : const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xFF2A2A2A), Color(0xFF1A1A1A)],
+                          ),
 
-                      width: 52,
-                      height: 52,
-
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-
-                        gradient: canSummon
-                            ? const LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [Color(0xFFFFD700), Color(0xFFFF8C00)],
-                              )
-                            : const LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [Color(0xFF2A2A2A), Color(0xFF1A1A1A)],
-                              ),
-
-                        border: Border.all(
-                          color: canSummon
-                              ? Colors.white.withOpacity(0.25)
-                              : Colors.white.withOpacity(0.05),
-                          width: 1.2,
-                        ),
-
-                        boxShadow: canSummon
-                            ? [
-                                BoxShadow(
-                                  color: const Color(
-                                    0xFFFFD700,
-                                  ).withOpacity(0.45),
-                                  blurRadius: 16,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ]
-                            : [],
-                      ),
-
-                      child: Icon(
-                        Icons.catching_pokemon_rounded,
-                        size: 26,
-                        color: canSummon
-                            ? Colors.white.withOpacity(0.95)
-                            : Colors.white24,
-                      ),
+                    border: Border.all(
+                      color: canSummon
+                          ? Colors.white.withOpacity(0.25)
+                          : Colors.white.withOpacity(0.05),
+                      width: 1.2,
                     ),
+
+                    boxShadow: canSummon
+                        ? [
+                            BoxShadow(
+                              color: const Color(0xFFFFD700).withOpacity(0.45),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                        : [],
                   ),
 
-                  if (count > 0)
-                    Positioned(
-                      top: -4,
-                      right: -4,
-                      child: Container(
-                        padding: const EdgeInsets.all(3),
-
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFFF8C00),
-                          shape: BoxShape.circle,
-                        ),
-
-                        child: Text(
-                          '$count',
-
-                          style: const TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                  if (!canSummon)
-                    Positioned(
-                      bottom: -2,
-                      right: -2,
-
-                      child: Container(
-                        width: 16,
-                        height: 16,
-
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF333333),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white12, width: 1),
-                        ),
-
-                        child: const Icon(
-                          Icons.lock,
-                          size: 9,
-                          color: Colors.white38,
-                        ),
-                      ),
-                    ),
-                ],
+                  child: Icon(
+                    Icons.catching_pokemon_rounded,
+                    size: 26,
+                    color: canSummon
+                        ? Colors.white.withOpacity(0.95)
+                        : Colors.white24,
+                  ),
+                ),
               );
             },
           ),
